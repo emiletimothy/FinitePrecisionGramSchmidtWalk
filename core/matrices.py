@@ -99,6 +99,14 @@ def matrix_family(name: str, m: int = 30, n_max: int = 1600, seed: int = 0):
     return builders[name](m=m, n_max=n_max, seed=seed)
 
 
+def family_rows(name: str, m: int, n: int) -> int:
+    """Row count of the named family's B at n columns.
+
+    clustered/gaussian honour the requested m; higgs/identity/lower_bound fix
+    their own (2, n and n+1 respectively)."""
+    return {"higgs": 2, "identity": n, "lower_bound": n + 1}.get(name, m)
+
+
 def add_matrix_arguments(parser, default: str = "higgs") -> None:
     """Standard --matrix/--m CLI pair used by every experiment script."""
     parser.add_argument("--matrix", choices=MATRIX_NAMES, default=default,

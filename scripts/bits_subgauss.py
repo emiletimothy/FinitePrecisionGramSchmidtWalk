@@ -57,20 +57,26 @@ def bits_subgauss(
 
     save_path = rollouts.output_path(save_path, noise_std)
     cache_path = save_path.replace(".png", "_cache.npz")
+
+    rng = np.random.default_rng(seed)
+    if not plot_only:
+        B = matrices.matrix_family(matrix, m=m, n_max=n, seed=seed)(n)
+        m = B.shape[0]
     settings = dict(noise_std=noise_std, seed=seed, matrix=matrix, matrix_n=n,
                     num_samples=num_samples, num_dirs=num_dirs, t=t,
                     sig_bits=list(sig_bits_values))
+    if not plot_only:
+        settings["m"] = m
     metadata = rollouts.experiment_metadata(**settings)
     if plot_only:
         z = rollouts.load_cache(cache_path, **settings)
         metadata = rollouts.metadata_from_cache(z)
+        # caches written before m was recorded fall back to the family's own m
+        m = int(metadata.get("m", matrices.family_rows(matrix, m, n)))
         sig_bits_values = [int(b) for b in z["sig_bits"]]
         stats = {int(b): {k: float(z[k][i]) for k in z if k not in ("sig_bits", "metadata")}
                  for i, b in enumerate(sig_bits_values)}
     else:
-        rng = np.random.default_rng(seed)
-        B = matrices.matrix_family(matrix, m=m, n_max=n, seed=seed)(n)
-        m, _ = B.shape
         directions = _directions_for(B, num_dirs, rng)
 
         stats = {}

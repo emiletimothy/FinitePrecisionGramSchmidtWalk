@@ -188,7 +188,7 @@ def n_subgauss(
     if plot_only:
         z = rollouts.load_cache(cache_path, **settings)
         metadata = rollouts.metadata_from_cache(z)
-        m = int(metadata.get("m", m))
+        m = int(metadata.get("m", matrices.family_rows(matrix, m, max(n_values))))
         sig_bits_values = [int(b) for b in z["sig_bits"]]
         n_values = [int(v) for v in z["n_values"]]
         stats = {}
