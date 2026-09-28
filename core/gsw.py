@@ -41,6 +41,9 @@ def gram_schmidt_walk(
            When given, the least-squares direction is computed by lpla.lstsq, a
            hand-rolled Householder QR/LQ solver in which every arithmetic operation
            is rounded to the target format (not just the solve's inputs/output).
+           If the callable also carries `.up`/`.down` directed variants (as
+           lpla.make_round's does), step-interval caps are rounded inward;
+           otherwise `chop` itself is used for them.
     noise: optional callable(n) -> ndarray; its output is added to z after each
            step, and z is clamped back to [-1, 1]^n before the next iteration.
            Example: lambda n: np.random.normal(0, 0.01, n)
@@ -55,6 +58,12 @@ def gram_schmidt_walk(
     Returns: WalkResult with assignment vector in {-1, +1}^n and run statistics
     """
     r = chop if chop is not None else lambda x: x
+    # Directed variants for the step-interval caps: lo toward +inf, hi toward
+    # -inf keeps the computed interval inside the true one; round-to-nearest
+    # can round an endpoint outward by half an ulp. Falls back to r for
+    # callables that do not provide directed variants.
+    r_up = getattr(chop, "up", r)
+    r_dn = getattr(chop, "down", r)
     B0 = np.asarray(B, dtype=float)
     B_hat = r(B0.copy())
     B = B_hat if quantize_input else B0
@@ -102,20 +111,23 @@ def gram_schmidt_walk(
         u = r(u)
 
         # Feasible step interval Delta = {delta : z + delta*u in [-1,1]^n}.
-        # The pivot (u_p = 1) participates in both caps: 1 - z_p upward and
-        # 1 + z_p downward.
+        # Caps are rounded inward — lo toward +inf, hi toward -inf — so the
+        # computed interval stays inside the true one.
         nz = np.flatnonzero(np.abs(u) > 0.0)   # u == 0 yields +-inf bounds anyway
         _z = z[nz]
         _u = u[nz]
-        r1 = r((-1.0 - _z) / _u)
-        r2 = r(( 1.0 - _z) / _u)
-        lo = r(np.minimum(r1, r2))
-        hi = r(np.maximum(r1, r2))
-        delta_min = float(r(np.array(np.max(lo))))
-        delta_max = float(r(np.array(np.min(hi))))
+        r1 = (-1.0 - _z) / _u
+        r2 = ( 1.0 - _z) / _u
+        lo = r_up(np.minimum(r1, r2))
+        hi = r_dn(np.maximum(r1, r2))
+        # Explicit pivot caps (u_p = 1): at most 1 - z_p upward and 1 + z_p
+        # downward. The pivot already enters through nz; enforced directly as
+        # in dtype_stability's ratio_test, where the pivot sits outside idx.
+        delta_min = max(float(np.max(lo)), float(r_up(np.array(-1.0 - z[p]))))
+        delta_max = min(float(np.min(hi)), float(r_dn(np.array( 1.0 - z[p]))))
 
-        d_plus  = float(r(np.array(abs(delta_max))))   # |max Delta|
-        d_minus = float(r(np.array(abs(delta_min))))   # |min Delta|
+        d_plus  = abs(delta_max)   # |max Delta|
+        d_minus = abs(delta_min)   # |min Delta|
         total = float(r(np.array(d_plus + d_minus)))
         if not np.isfinite(total) or total == 0.0:
             failed = "degenerate_interval"

@@ -50,6 +50,8 @@ def lower_bound_walk(B, a, chop=None, seed=None):
     """
     m, n = B.shape
     r = chop if chop is not None else lambda x: x
+    r_up = getattr(chop, "up", r)      # inward rounding for interval caps
+    r_dn = getattr(chop, "down", r)
     B0 = np.asarray(B, dtype=float)
     B = r(B0.copy())
     rng = np.random.default_rng(seed)
@@ -70,15 +72,16 @@ def lower_bound_walk(B, a, chop=None, seed=None):
         u[free] = float(r(np.array(-1.0 / k)))
         u = r(u)
 
-        # feasible interval for the active coordinates, exactly as in gsw.py
+        # feasible interval for the active coordinates, exactly as in gsw.py:
+        # caps rounded inward (lo up / hi down), pivot caps enforced explicitly
         z_a = z[active]
         u_a = u[active]
-        r1 = r((-1.0 - z_a) / u_a)
-        r2 = r((1.0 - z_a) / u_a)
-        lo = r(np.minimum(r1, r2))
-        hi = r(np.maximum(r1, r2))
-        delta_min = float(r(np.array(np.max(lo))))
-        delta_max = float(r(np.array(np.min(hi))))
+        r1 = (-1.0 - z_a) / u_a
+        r2 = (1.0 - z_a) / u_a
+        lo = r_up(np.minimum(r1, r2))
+        hi = r_dn(np.maximum(r1, r2))
+        delta_min = max(float(np.max(lo)), float(r_up(np.array(-1.0 - z[p]))))
+        delta_max = min(float(np.min(hi)), float(r_dn(np.array(1.0 - z[p]))))
         total = float(r(np.array(abs(delta_max) + abs(delta_min))))
         if total < 1e-15:
             break

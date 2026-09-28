@@ -20,6 +20,19 @@ inputs; see the __main__ block for the correctness check.
 import numpy as np
 
 
+def _mantissa_rounder(sig_bits, kind):
+    """Significand rounder to `sig_bits` fraction bits; `kind` sets the direction
+    (np.round = nearest-even, np.ceil = toward +inf, np.floor = toward -inf)."""
+    step = 2.0 ** (sig_bits + 1)   # significand quantization (m in [0.5,1) -> sig_bits frac bits)
+
+    def rnd(x):
+        m, e = np.frexp(np.asarray(x, dtype=np.float64))   # x = m * 2**e, |m| in [0.5,1)
+        return np.ldexp(kind(m * step) / step, e)          # round significand, rescale
+
+    rnd.sig_bits = sig_bits   # lets consumers scale tolerances to the format ulp
+    return rnd
+
+
 def make_round(sig_bits):
     """Return a fast round-to-nearest-even *mantissa* rounder (`sig_bits` fraction bits).
 
@@ -29,14 +42,14 @@ def make_round(sig_bits):
     behavior) is deliberately not, since this is for studying the effect of rounding, not
     bit-exact hardware emulation. For in-range values this matches the rounding of an IEEE
     format with `sig_bits` fraction bits.
+
+    The returned callable also carries `.up` and `.down`: directed variants that round
+    the significand toward +inf and -inf, for interval endpoints that must not round
+    outward. At sig_bits=52 all three act as the identity on float64 inputs.
     """
-    step = 2.0 ** (sig_bits + 1)   # significand quantization (m in [0.5,1) -> sig_bits frac bits)
-
-    def rnd(x):
-        m, e = np.frexp(np.asarray(x, dtype=np.float64))   # x = m * 2**e, |m| in [0.5,1)
-        return np.ldexp(np.round(m * step) / step, e)      # round significand, rescale
-
-    rnd.sig_bits = sig_bits   # lets consumers scale tolerances to the format ulp
+    rnd = _mantissa_rounder(sig_bits, np.round)
+    rnd.up = _mantissa_rounder(sig_bits, np.ceil)
+    rnd.down = _mantissa_rounder(sig_bits, np.floor)
     return rnd
 
 
