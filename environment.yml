@@ -1,0 +1,16 @@
+name: gsw
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.13
+  - numpy
+  - matplotlib
+  - tqdm
+  - scipy
+  - pandas
+  - scikit-learn
+  - dask
+  - pip
+  - pip:
+    - pychop
