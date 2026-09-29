@@ -132,7 +132,8 @@ stats cache exists. Figure filenames embed the matrix by default.
 | `norm_dists.py` | `norm_dists/norm_dists_<matrix>.png` | Mahalanobis-whitened norm distributions of `Bz` vs max-of-iid / χ_m references. |
 | `qq_diagnostics.py` | `qq_diagnostics/qq_diagnostics_<matrix>.png` | Q–Q scatter, standardised tail, and density of `Bz` coords vs N(0,1). |
 | `walk_step.py` | — | interactive single-walk step-through. |
-| `scaling_collapse.py` | `scaling_collapse/scaling_collapse_<matrix>.png` | composite of the `n_subgauss` + `lb_subgauss` caches (no new rollouts): uncentered σ̂ collapse on `n·2^-b` vs `n²·2^-b`, with fitted `√(σ₀²+(cx)²)` and `k·x/√2` curves, the σ=1 guarantee line, and open markers outside the `a < 1/(8n)` precondition. |
+| `scaling_collapse.py` | `scaling_collapse/scaling_collapse_<matrix>.png` | composite of the `n_subgauss` + `lb_subgauss` caches (no new rollouts): uncentered Ŝ = √(σ̂²+b̂²_max) collapse on `n·2^-b` vs `n²·2^-b`, with fitted `√(σ₀²+(cx)²)` and `k·x/√2` curves, the σ=1 guarantee line, and open markers outside the `a < 1/(8n)` precondition. |
+| `ensemble_panels.py` | `ensemble_panels/ensemble_panels.png` | composite 2×2 (no new rollouts): clustered and identity rows, worst-direction Ŝ vs n (left) and vs mantissa bits (right), from the corresponding `n_subgauss`/`bits_subgauss` caches. `--centered` plots plain σ̂. |
 
 ## Conventions
 

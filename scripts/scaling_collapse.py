@@ -1,4 +1,9 @@
-"""Scaling collapse: σ̂ vs n·2^-b (natural matrix) and a·n² (lower bound).
+"""Scaling collapse: Ŝ vs n·2^-b (natural matrix) and a·n² (lower bound).
+
+Ŝ = sqrt(σ̂² + b̂_max²) is the uncentered worst-direction scale: it folds the
+eval-set bias back into the centered σ̂, matching how the discrepancy bounds
+measure error (Appendix D). On natural matrices bias ≪ σ̂ so Ŝ ≈ σ̂; on the
+adversarial matrix the deterministic error lives in the bias.
 
 Composite of two existing stats caches — no new rollouts:
 
@@ -160,7 +165,7 @@ def main():
     c_n = _collapse_panel(ax_n, sig_bits_n, n_vals, sig_max_n, bias_n,
                           power=1, model="quad")
     ax_n.set_xlabel("n · 2^{-bits}")
-    ax_n.set_ylabel("σ̂ (worst dir)")
+    ax_n.set_ylabel(r"$\hat{S}$ (worst dir)")
     ax_n.set_title(f"{args.matrix} B: collapse on n·ε")
     ax_n.legend(title="mantissa bits", fontsize=7, title_fontsize=8)
 
@@ -168,6 +173,7 @@ def main():
                            power=2, model="linear",
                            validity=_valid_for_adversarial)
     ax_lb.set_xlabel("n² · 2^{-bits}")
+    ax_lb.set_ylabel(r"$\hat{S}$ (worst dir)")
     ax_lb.set_title("lower-bound: collapse on n²·ε")
     ax_lb.legend(title="mantissa bits", fontsize=7, title_fontsize=8)
 
