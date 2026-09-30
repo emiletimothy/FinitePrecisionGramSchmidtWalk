@@ -71,7 +71,7 @@ def plot_panels(n_cl_cache, n_id_cache, b_cl_cache, b_id_cache,
             ax.legend(fontsize=7, title="bits", title_fontsize=7,
                       loc="upper left")
 
-        # right: S vs bits at fixed n -- markers with a shaded 95% band
+        # right: S vs bits at fixed n -- shaded +/-1.96*SD batch-variability band
         ax = axes[row][1]
         bits = np.asarray(b_st["sig_bits"], float)
         med = _uncentered(b_st, centered=centered)
